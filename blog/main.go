@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"go-MS/goweb"
-	"net/http"
 )
 
 func main() {
@@ -18,11 +17,19 @@ func main() {
 	engine := goweb.New()
 	g := engine.Group("user")
 
-	g.Get("/hello", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%s welcome to golang world!", "xixi~")
+	g.Post("/hello", func(ctx *goweb.Context) {
+		fmt.Fprintf(ctx.W, "%s post welcome to golang world!", "xixi~")
 	})
-	g.Post("/xixi", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%s welcome to golang world!", "heloo")
+
+	g.Get("/hello", func(ctx *goweb.Context) {
+		fmt.Fprintf(ctx.W, "%s get welcome to golang world!", "xixi1")
+	})
+
+	g.Post("/xixi", func(ctx *goweb.Context) {
+		fmt.Fprintf(ctx.W, "%s welcome to golang world!", "heloo")
+	})
+	g.Any("/xixi", func(ctx *goweb.Context) {
+		fmt.Fprintf(ctx.W, "%s any welcome to golang world!", "heloo")
 	})
 	//order := engine.Group("order")
 	//order.Add("/get", func(w http.ResponseWriter, r *http.Request) {

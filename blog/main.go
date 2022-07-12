@@ -18,15 +18,15 @@ func main() {
 	engine := goweb.New()
 	g := engine.Group("user")
 
-	g.Add("/hello", func(w http.ResponseWriter, r *http.Request) {
+	g.Get("/hello", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s welcome to golang world!", "xixi~")
 	})
-	g.Add("/xixi", func(w http.ResponseWriter, r *http.Request) {
+	g.Post("/xixi", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "%s welcome to golang world!", "heloo")
 	})
-	order := engine.Group("order")
-	order.Add("/get", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "%s 查询订单", "xck")
-	})
+	//order := engine.Group("order")
+	//order.Add("/get", func(w http.ResponseWriter, r *http.Request) {
+	//	fmt.Fprintf(w, "%s 查询订单", "xck")
+	//})
 	engine.Run()
 }

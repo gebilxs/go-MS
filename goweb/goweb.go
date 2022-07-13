@@ -8,11 +8,11 @@ import (
 
 const ANY = "ANY"
 
-type HandleFunc func(ctx *Context)
+type HandlerFunc func(ctx *Context)
 
 type routerGroup struct {
 	name          string
-	handleFuncMap map[string]map[string]HandleFunc
+	handleFuncMap map[string]map[string]HandlerFunc
 	//设置handlerMethodMap 前面是请求方式，后面是路由
 	handlerMethodMap map[string][]string
 	treeNode         *treeNode
@@ -22,40 +22,70 @@ type routerGroup struct {
 //	r.handleFuncMap[name] = handleFunc
 //}
 
-func (r *routerGroup) handle(name string, method string, handleFunc HandleFunc) {
+func (r *routerGroup) handle(name string, method string, handlerFunc HandlerFunc) {
 
 	_, ok := r.handleFuncMap[name]
 	if !ok {
-		r.handleFuncMap[name] = make(map[string]HandleFunc)
+		r.handleFuncMap[name] = make(map[string]HandlerFunc)
 	}
 	_, ok = r.handleFuncMap[name][method]
 	if ok {
 		panic("There are duplicate routes!")
 	}
-	r.handleFuncMap[name][method] = handleFunc
+	r.handleFuncMap[name][method] = handlerFunc
 
 	r.treeNode.Put(name)
 }
 
 // 下面各种请求方式在对应的包中都有常量
-func (r *routerGroup) Any(name string, handleFunc HandleFunc) {
-	r.handle(name, ANY, handleFunc)
+func (r *routerGroup) Any(name string, handlerFunc HandlerFunc) {
+	r.handle(name, ANY, handlerFunc)
 }
 
 //GET
 
-func (r *routerGroup) Get(name string, handleFunc HandleFunc) {
+func (r *routerGroup) Get(name string, handlerFunc HandlerFunc) {
 	//r.handleFuncMap[name] = handleFunc
 	//r.handlerMethodMap[http.MethodGet] = append(r.handlerMethodMap[http.MethodGet], name)
-	r.handle(name, http.MethodGet, handleFunc)
+	r.handle(name, http.MethodGet, handlerFunc)
 }
 
 //Post
 
-func (r *routerGroup) Post(name string, handleFunc HandleFunc) {
+func (r *routerGroup) Post(name string, handleFunc HandlerFunc) {
 	//r.handleFuncMap[name] = handleFunc
 	//r.handlerMethodMap[http.MethodPost] = append(r.handlerMethodMap[http.MethodPost], name)
 	r.handle(name, http.MethodPost, handleFunc)
+}
+
+//Delete
+
+func (r *routerGroup) Delete(name string, handlerFunc HandlerFunc) {
+	r.handle(name, http.MethodDelete, handlerFunc)
+}
+
+//put
+
+func (r *routerGroup) Put(name string, handlerFunc HandlerFunc) {
+	r.handle(name, http.MethodPut, handlerFunc)
+}
+
+//patch
+
+func (r *routerGroup) Patch(name string, handlerFunc HandlerFunc) {
+	r.handle(name, http.MethodPatch, handlerFunc)
+}
+
+//options
+
+func (r *routerGroup) Options(name string, handlerFunc HandlerFunc) {
+	r.handle(name, http.MethodOptions, handlerFunc)
+}
+
+//Head
+
+func (r *routerGroup) Head(name string, handlerFunc HandlerFunc) {
+	r.handle(name, http.MethodHead, handlerFunc)
 }
 
 //user get->handle
@@ -63,7 +93,7 @@ func (r *routerGroup) Post(name string, handleFunc HandleFunc) {
 //order
 type router struct {
 	routerGroups  []*routerGroup
-	handleFuncMap map[string]HandleFunc
+	handleFuncMap map[string]HandlerFunc
 }
 
 //add function group
@@ -71,7 +101,7 @@ type router struct {
 func (r *router) Group(name string) *routerGroup {
 	routerGroup := &routerGroup{
 		name:             name,
-		handleFuncMap:    make(map[string]map[string]HandleFunc), //以方法名作为key，map【key】覆盖啊，应该判断key存在的时候，去新增对应map【string】HandleFunc
+		handleFuncMap:    make(map[string]map[string]HandlerFunc), //以方法名作为key，map【key】覆盖啊，应该判断key存在的时候，去新增对应map【string】HandleFunc
 		handlerMethodMap: make(map[string][]string),
 		treeNode:         &treeNode{name: "/", children: make([]*treeNode, 0)},
 	}

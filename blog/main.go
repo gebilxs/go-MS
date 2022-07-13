@@ -17,12 +17,12 @@ func main() {
 	engine := goweb.New()
 	g := engine.Group("user")
 
-	g.Post("/hello", func(ctx *goweb.Context) {
-		fmt.Fprintf(ctx.W, "%s post welcome to golang world!", "xixi~")
-	})
+	//g.Post("/hello", func(ctx *goweb.Context) {
+	//	fmt.Fprintf(ctx.W, "%s post welcome to golang world!", "xixi~")
+	//})
 
-	g.Get("/hello", func(ctx *goweb.Context) {
-		fmt.Fprintf(ctx.W, "%s get welcome to golang world!", "xixi1")
+	g.Get("/hello/*/get", func(ctx *goweb.Context) {
+		fmt.Fprintf(ctx.W, "%s with /*/get welcome to golang world!", "test")
 	})
 
 	g.Post("/xixi", func(ctx *goweb.Context) {

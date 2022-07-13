@@ -100,7 +100,7 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, group := range e.routerGroups {
 		routerName := SubStringLast(r.RequestURI, "/"+group.name)
 		node := group.treeNode.Get(routerName)
-		if node != nil {
+		if node != nil && node.isEnd {
 			//匹配
 			ctx := &Context{
 				W: w,

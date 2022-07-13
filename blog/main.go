@@ -31,6 +31,12 @@ func main() {
 	g.Any("/xixi", func(ctx *goweb.Context) {
 		fmt.Fprintf(ctx.W, "%s any welcome to golang world!", "heloo")
 	})
+
+	//前缀树测试用数据
+
+	g.Get("/get/:id", func(ctx *goweb.Context) {
+		fmt.Fprintf(ctx.W, "%s get user ", "1 frset")
+	})
 	//order := engine.Group("order")
 	//order.Add("/get", func(w http.ResponseWriter, r *http.Request) {
 	//	fmt.Fprintf(w, "%s 查询订单", "xck")

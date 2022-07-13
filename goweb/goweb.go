@@ -15,6 +15,7 @@ type routerGroup struct {
 	handleFuncMap map[string]map[string]HandleFunc
 	//设置handlerMethodMap 前面是请求方式，后面是路由
 	handlerMethodMap map[string][]string
+	treeNode         *treeNode
 }
 
 //func (r *routerGroup) Add(name string, handleFunc HandleFunc) {
@@ -32,6 +33,8 @@ func (r *routerGroup) handle(name string, method string, handleFunc HandleFunc) 
 		panic("There are duplicate routes!")
 	}
 	r.handleFuncMap[name][method] = handleFunc
+
+	r.treeNode.Put(name)
 }
 
 // 下面各种请求方式在对应的包中都有常量
@@ -64,11 +67,13 @@ type router struct {
 }
 
 //add function group
+//这里进行初始化
 func (r *router) Group(name string) *routerGroup {
 	routerGroup := &routerGroup{
 		name:             name,
 		handleFuncMap:    make(map[string]map[string]HandleFunc), //以方法名作为key，map【key】覆盖啊，应该判断key存在的时候，去新增对应map【string】HandleFunc
 		handlerMethodMap: make(map[string][]string),
+		treeNode:         &treeNode{name: "/", children: make([]*treeNode, 0)},
 	}
 	r.routerGroups = append(r.routerGroups, routerGroup)
 	return routerGroup
@@ -93,49 +98,70 @@ func New() *Engine {
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	method := r.Method
 	for _, group := range e.routerGroups {
-		for name, methodHandle := range group.handleFuncMap {
-			url := "/" + group.name + name
-			if r.RequestURI == url {
-				//更新上下文
-				ctx := &Context{
-					W: w,
-					R: r,
-				}
-				handle, ok := methodHandle[ANY]
-				if ok {
-					handle(ctx)
-					return
-				}
-				handle, ok = methodHandle[method]
-				if ok {
-					handle(ctx)
-					return
-				}
-
-				//routers, ok := group.handlerMethodMap["ANY"]
-				//if ok {
-				//	for _, routerName := range routers {
-				//		if routerName == name {
-				//			methodHandle(w, r)
-				//			return
-				//		}
-				//	}
-				//}
-				//method进行匹配
-				//routers, ok = group.handlerMethodMap[method]
-				//if ok {
-				//	for _, routerName := range routers {
-				//		if routerName == name {
-				//			methodHandle(w, r)
-				//			return
-				//		}
-				//	}
-				//}
-				//Error 405
-				w.WriteHeader(http.StatusMethodNotAllowed)
-				fmt.Fprintf(w, "%s %s not allowed\n", r.RequestURI, method)
+		routerName := SubStringLast(r.RequestURI, "/"+group.name)
+		node := group.treeNode.Get(routerName)
+		if node != nil {
+			//匹配
+			ctx := &Context{
+				W: w,
+				R: r,
+			}
+			handle, ok := group.handleFuncMap[node.routerName][ANY]
+			if ok {
+				handle(ctx)
 				return
 			}
+			handle, ok = group.handleFuncMap[node.routerName][method]
+			if ok {
+				handle(ctx)
+				return
+			}
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			fmt.Fprintf(w, "%s %s not allowed\n", r.RequestURI, method)
+			return
+			//for name, methodHandle := range group.handleFuncMap {
+			//	url := "/" + group.name + name
+			//	if r.RequestURI == url {
+			//		//更新上下文
+			//		ctx := &Context{
+			//			W: w,
+			//			R: r,
+			//		}
+			//		handle, ok := methodHandle[ANY]
+			//		if ok {
+			//			handle(ctx)
+			//			return
+			//		}
+			//		handle, ok = methodHandle[method]
+			//		if ok {
+			//			handle(ctx)
+			//			return
+			//		}
+
+			//routers, ok := group.handlerMethodMap["ANY"]
+			//if ok {
+			//	for _, routerName := range routers {
+			//		if routerName == name {
+			//			methodHandle(w, r)
+			//			return
+			//		}
+			//	}
+			//}
+			//method进行匹配
+			//routers, ok = group.handlerMethodMap[method]
+			//if ok {
+			//	for _, routerName := range routers {
+			//		if routerName == name {
+			//			methodHandle(w, r)
+			//			return
+			//		}
+			//	}
+			//}
+			//Error 405
+			//w.WriteHeader(http.StatusMethodNotAllowed)
+			//fmt.Fprintf(w, "%s %s not allowed\n", r.RequestURI, method)
+			//		//return
+			//	}
 		}
 	}
 	w.WriteHeader(http.StatusNotFound)

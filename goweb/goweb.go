@@ -10,12 +10,40 @@ const ANY = "ANY"
 
 type HandlerFunc func(ctx *Context)
 
+type MiddlewareFunc func(handlerFunc HandlerFunc) HandlerFunc
+
 type routerGroup struct {
 	name          string
 	handleFuncMap map[string]map[string]HandlerFunc
 	//设置handlerMethodMap 前面是请求方式，后面是路由
 	handlerMethodMap map[string][]string
 	treeNode         *treeNode
+	preMiddlewares   []MiddlewareFunc
+	postMiddlewares  []MiddlewareFunc
+}
+
+//设计前置的中间件 可能会加入多个所以在其中加入3个...
+
+func (r *routerGroup) PreHandle(middlewareFunc ...MiddlewareFunc) {
+	r.preMiddlewares = append(r.preMiddlewares, middlewareFunc...)
+}
+
+//处理后置的中间件
+
+func (r *routerGroup) PostHandle(middlewareFunc ...MiddlewareFunc) {
+	r.postMiddlewares = append(r.postMiddlewares, middlewareFunc...)
+}
+
+func (r *routerGroup) methodHandle(h HandlerFunc, ctx *Context) {
+	//前置中间件
+	if r.preMiddlewares != nil {
+		for _, middlewareFunc := range r.preMiddlewares {
+			h = middlewareFunc(h)
+		}
+	}
+
+	h(ctx)
+	//后置中间件
 }
 
 //func (r *routerGroup) Add(name string, handleFunc HandleFunc) {
@@ -126,6 +154,11 @@ func New() *Engine {
 
 //实现ServerHTTP
 func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	e.httpRequestHandle(w, r)
+}
+
+//实现httpRequestHandle
+func (e *Engine) httpRequestHandle(w http.ResponseWriter, r *http.Request) {
 	method := r.Method
 	for _, group := range e.routerGroups {
 		routerName := SubStringLast(r.RequestURI, "/"+group.name)
@@ -138,13 +171,17 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			handle, ok := group.handleFuncMap[node.routerName][ANY]
 			if ok {
-				handle(ctx)
+				//handle(ctx)
+				group.methodHandle(handle, ctx)
 				return
+
 			}
 			handle, ok = group.handleFuncMap[node.routerName][method]
 			if ok {
-				handle(ctx)
+				//handle(ctx)
+				group.methodHandle(handle, ctx)
 				return
+
 			}
 			w.WriteHeader(http.StatusMethodNotAllowed)
 			fmt.Fprintf(w, "%s %s not allowed\n", r.RequestURI, method)

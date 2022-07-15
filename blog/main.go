@@ -21,7 +21,15 @@ func main() {
 	//	fmt.Fprintf(ctx.W, "%s post welcome to golang world!", "xixi~")
 	//})
 
-	g.Get("/hello/*/get", func(ctx *goweb.Context) {
+	//测试中间件
+	g.PreHandle(func(next goweb.HandlerFunc) goweb.HandlerFunc {
+		return func(ctx *goweb.Context) {
+			fmt.Println("hello world!")
+			next(ctx)
+		}
+	})
+	g.Get("/hello/get", func(ctx *goweb.Context) {
+		fmt.Println("second world!")
 		fmt.Fprintf(ctx.W, "%s with /*/get welcome to golang world!", "test")
 	})
 

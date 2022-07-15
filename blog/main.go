@@ -22,12 +22,19 @@ func main() {
 	//})
 
 	//测试中间件
-	g.PreHandle(func(next goweb.HandlerFunc) goweb.HandlerFunc {
+	g.Use(func(next goweb.HandlerFunc) goweb.HandlerFunc {
 		return func(ctx *goweb.Context) {
 			fmt.Println("hello world!")
 			next(ctx)
+			fmt.Println("third world!")
 		}
 	})
+	//后置中间件是没有必要的可以做一定的改造
+	//g.PostHandle(func(next goweb.HandlerFunc) goweb.HandlerFunc {
+	//	return func(ctx *goweb.Context) {
+	//		fmt.Println("third world!")
+	//	}
+	//})
 	g.Get("/hello/get", func(ctx *goweb.Context) {
 		fmt.Println("second world!")
 		fmt.Fprintf(ctx.W, "%s with /*/get welcome to golang world!", "test")

@@ -18,32 +18,37 @@ type routerGroup struct {
 	//设置handlerMethodMap 前面是请求方式，后面是路由
 	handlerMethodMap map[string][]string
 	treeNode         *treeNode
-	preMiddlewares   []MiddlewareFunc
-	postMiddlewares  []MiddlewareFunc
+	middlewares      []MiddlewareFunc
 }
 
 //设计前置的中间件 可能会加入多个所以在其中加入3个...
 
-func (r *routerGroup) PreHandle(middlewareFunc ...MiddlewareFunc) {
-	r.preMiddlewares = append(r.preMiddlewares, middlewareFunc...)
+func (r *routerGroup) Use(middlewareFunc ...MiddlewareFunc) {
+	r.middlewares = append(r.middlewares, middlewareFunc...)
 }
 
 //处理后置的中间件
 
-func (r *routerGroup) PostHandle(middlewareFunc ...MiddlewareFunc) {
-	r.postMiddlewares = append(r.postMiddlewares, middlewareFunc...)
-}
+//func (r *routerGroup) PostHandle(middlewareFunc ...MiddlewareFunc) {
+//	r.postMiddlewares = append(r.postMiddlewares, middlewareFunc...)
+//}
 
 func (r *routerGroup) methodHandle(h HandlerFunc, ctx *Context) {
 	//前置中间件
-	if r.preMiddlewares != nil {
-		for _, middlewareFunc := range r.preMiddlewares {
+	if r.middlewares != nil {
+		for _, middlewareFunc := range r.middlewares {
 			h = middlewareFunc(h)
 		}
 	}
 
 	h(ctx)
-	//后置中间件
+	////后置中间件
+	//if r.postMiddlewares != nil {
+	//	for _, middlewareFunc := range r.postMiddlewares {
+	//		h = middlewareFunc(h)
+	//	}
+	//}
+	//h(ctx)
 }
 
 //func (r *routerGroup) Add(name string, handleFunc HandleFunc) {
